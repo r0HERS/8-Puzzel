@@ -21,7 +21,7 @@ A IA implementada neste projeto utiliza a técnica de Busca em Largura (BFS) par
 
 Este projeto foi desenvolvido por:
 - **Renan Rohers Salvador** - 22003561
-- **Tiago Dallecio** 
+- **Tiago Dallecio** - 22001336
 - **Kauai Duhamel** 
 
 ## Licença

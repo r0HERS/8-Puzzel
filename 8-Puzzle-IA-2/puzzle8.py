@@ -121,6 +121,97 @@ def manhattan(state):
     return value
 
 
+##################
+
+#  BFS, DFS, A*  #
+
+##################
+
+class BFS:
+
+    def search(initial_board):
+        print("Executando BFS ")
+
+        queue = deque([initial_board])
+        visited = set()
+        visited.add(state_to_tuple(initial_board))
+
+        while queue:
+            current_state = queue.popleft()
+
+            if is_final(current_state):
+                yield current_state, True
+                return
+
+            for neighbor in get_neightbors(current_state):
+                neighbor_tuple = state_to_tuple(neighbor)
+                if neighbor_tuple not in visited:
+                    queue.append(neighbor)
+                    visited.add(neighbor_tuple)
+            
+            yield current_state, False
+
+
+
+class DFS:
+
+    def search(initial_board):
+        print("Executando DFS ")
+        stack = [initial_board]
+        visited = set()
+        visited.add(state_to_tuple(initial_board))
+
+        while stack:
+            current_state = stack.pop()
+
+            if is_final(current_state):
+                yield current_state, True
+                return
+
+            for neighbor in get_neightbors(current_state):
+                neighbor_tuple = state_to_tuple(neighbor)
+                if neighbor_tuple not in visited:
+                    stack.append(neighbor)
+                    visited.add(neighbor_tuple)
+            
+            yield current_state, False
+
+
+
+class Astar:
+
+    def search(initial_board):
+        print("Executando A* ")
+        visited = set()
+        priority_queue = []
+        step_count = 0
+        
+        # Estado inicial com manhattan_value
+        manhattan_value = manhattan(initial_board)
+        heapq.heappush(priority_queue, (manhattan_value + step_count, step_count, initial_board))
+        visited.add(state_to_tuple(initial_board))
+
+        while priority_queue:
+            current_state = heapq.heappop(priority_queue)
+
+            # Verifica se é o estado final
+            if is_final(current_state[2]):
+                yield current_state[2], True
+                return
+
+            # Explora os vizinhos
+            for neighbor in get_neightbors(current_state[2]):
+                if state_to_tuple(neighbor) not in visited:
+                    visited.add(state_to_tuple(neighbor))
+                    # Calcula o valor total (f = g + h)
+                    tuple_state = A_star(neighbor, current_state[1])
+                    heapq.heappush(priority_queue, tuple_state)
+            
+            yield current_state[2], False
+
+
+
+
 
 '''def playIA():
     state = initial_state(100)

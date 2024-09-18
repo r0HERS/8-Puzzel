@@ -47,26 +47,6 @@ def draw_board(board):
     pygame.display.flip() 
     return tiles
 
-def bfs_generator(initial_board):
-    queue = deque([initial_board])
-    visited = set()
-    visited.add(puzzle.state_to_tuple(initial_board))
-
-    while queue:
-        current_state = queue.popleft()
-
-        if puzzle.is_final(current_state):
-            yield current_state, True
-            return
-
-        for neighbor in puzzle.get_neightbors(current_state):
-            neighbor_tuple = puzzle.state_to_tuple(neighbor)
-            if neighbor_tuple not in visited:
-                queue.append(neighbor)
-                visited.add(neighbor_tuple)
-        
-        yield current_state, False
-
 def greedy_generator(initial_board):
     queue = deque([initial_board])
     visited = set()
@@ -95,55 +75,6 @@ def greedy_generator(initial_board):
         visited.add(puzzle.state_to_tuple(next_state))
 
         yield current_board, False
-
-def dfs_generator(initial_board):
-    stack = [initial_board]
-    visited = set()
-    visited.add(puzzle.state_to_tuple(initial_board))
-
-    while stack:
-        current_state = stack.pop()
-
-        if puzzle.is_final(current_state):
-            yield current_state, True
-            return
-
-        for neighbor in puzzle.get_neightbors(current_state):
-            neighbor_tuple = puzzle.state_to_tuple(neighbor)
-            if neighbor_tuple not in visited:
-                stack.append(neighbor)
-                visited.add(neighbor_tuple)
-        
-        yield current_state, False
-
-def astar_generator(initial_board):
-    visited = set()
-    priority_queue = []
-    step_count = 0
-    
-    # Estado inicial com manhattan_value
-    manhattan_value = puzzle.manhattan(initial_board)
-    heapq.heappush(priority_queue, (manhattan_value + step_count, step_count, initial_board))
-    visited.add(puzzle.state_to_tuple(initial_board))
-
-    while priority_queue:
-        current_state = heapq.heappop(priority_queue)
-
-        # Verifica se é o estado final
-        if puzzle.is_final(current_state[2]):
-            yield current_state[2], True
-            return
-
-        # Explora os vizinhos
-        for neighbor in puzzle.get_neightbors(current_state[2]):
-            if puzzle.state_to_tuple(neighbor) not in visited:
-                visited.add(puzzle.state_to_tuple(neighbor))
-                # Calcula o valor total (f = g + h)
-                tuple_state = puzzle.A_star(neighbor, current_state[1])
-                heapq.heappush(priority_queue, tuple_state)
-        
-        yield current_state[2], False
-
 
 board = puzzle.initial_state(100)
 tile_size = 100
@@ -224,11 +155,11 @@ while True:
             elif playAIButton.collidepoint(mouse):
                 time.sleep(0.2)
                 mode = 0
-                bfs_steps = bfs_generator(current_board)
+                bfs_steps = puzzle.BFS.search(current_board)
             elif playAIDFSButton.collidepoint(mouse):
                 time.sleep(0.2)
                 mode = 3
-                dfs_steps = dfs_generator(current_board)
+                dfs_steps = puzzle.DFS.search(current_board)
             elif playAIGreedyButton.collidepoint(mouse):
                 time.sleep(0.2)
                 mode = 2
@@ -236,7 +167,7 @@ while True:
             elif playAIAStarButton.collidepoint(mouse):
                 time.sleep(0.2)
                 mode = 4
-                astar_steps = astar_generator(current_board)
+                astar_steps = puzzle.Astar.search(current_board)
 
     elif mode == 1:  # Modo manual
         screen.fill(black)

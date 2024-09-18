@@ -2,8 +2,9 @@ import random
 import copy
 from collections import deque
 import math
+import heapq
 
-EMPTY = ' '
+EMPTY = 0
 
 state_empty = [[EMPTY, EMPTY, EMPTY],
                [EMPTY, EMPTY, EMPTY],
@@ -94,7 +95,7 @@ def make_move(state, number):
     return copy_state
 
 
-def get_neightboors(state):
+def get_neightbors(state):
     neightbors = []
 
     for number in available_moves(state):
@@ -108,19 +109,17 @@ def state_to_tuple(state):
     return tuple(tuple(row) for row in state)
 
 def manhattan(state):
-
     value = 0
-
     for row in range(len(state)):
         for cell in range(len(state[row])):
             num = state[row][cell]
-            for i in range(len(state_final)):
-                for j in range(len(state_final[i])):
-                    if state_final[i][j] == num:            
-                        value = value + abs(row - i) + abs(cell - j)
-
-
+            if num != EMPTY:  
+                for i in range(len(state_final)):
+                    for j in range(len(state_final[i])):
+                        if state_final[i][j] == num:
+                            value += abs(row - i) + abs(cell - j)
     return value
+
 
 
 '''def playIA():
@@ -139,7 +138,7 @@ def manhattan(state):
             print_state(current_state)
             return 0
         
-        for neightbor in get_neightboors(current_state):
+        for neightbor in get_neightbors(current_state):
             if state_to_tuple(neightbor) not in visited:
                 x = manhattan(neightbor)
                 if x < manhattan_value:
@@ -158,3 +157,50 @@ def manhattan(state):
 
 
 playIA()'''
+
+
+def A_star(state,step_count):
+
+    new_count = step_count + 1
+
+    manhattan_value = manhattan(state)
+
+    toltal_value = new_count + manhattan_value 
+
+    return (toltal_value,new_count,state)
+
+
+'''def playIAStar():
+    state = initial_state(100)
+
+    visited = set()
+
+    priority_queue = []
+
+    step_count = 0 
+
+    manhattan_value = manhattan(state)
+
+    heapq.heappush(priority_queue,(manhattan_value + step_count,step_count,state))
+
+
+    while priority_queue:
+        
+        current_state = heapq.heappop(priority_queue)
+        print_state(current_state[2])
+        print(current_state[0])
+        print(current_state[1])
+        if is_final(current_state[2]):
+            print("achoooooooooooooooooooooooooooooo")
+            print_state(current_state[2])
+            return 0
+
+        for neighbor in get_neightbors(current_state[2]):
+            if state_to_tuple(neighbor) not in visited:
+                visited.add(state_to_tuple(neighbor))
+                tuple_state = A_star(neighbor, current_state[1])
+                heapq.heappush(priority_queue, tuple_state)
+
+    return
+
+playIAStar()'''

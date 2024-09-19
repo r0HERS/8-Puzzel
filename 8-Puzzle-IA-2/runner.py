@@ -48,68 +48,34 @@ def draw_board(state):
     pygame.display.flip() 
     return tiles
 
-def bfs_generator(initial_state):
-    bfs = puzzle.BFS()
+def stop_updates():
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                return
+
+def PlayAI(algorithm, initial_state):
+    structure = algorithm()
     visited = set()
-    bfs.add_to_structure(initial_state)
+    structure.add_to_structure(initial_state)
     visited.add(initial_state.state_to_tuple())
 
-    while not bfs.is_empty():
-        current_state = bfs.get_from_structure()
+    while not structure.is_empty():
+        current_state = structure.get_from_structure()
 
         if current_state.is_final():
             yield current_state, True
             return
 
         for neighbor in current_state.get_neighbors():
-            if neighbor.state_to_tuple() not in visited:
-                bfs.add_to_structure(neighbor)
-                visited.add(neighbor.state_to_tuple())
-        
-        yield current_state, False
+            neighbor_tuple = neighbor.state_to_tuple()
+            if neighbor_tuple not in visited:
+                visited.add(neighbor_tuple)
+                structure.add_to_structure(neighbor)
 
-def greedy_generator(initial_state):
-    greedy = puzzle.Greedy()
-    pass
-
-def dfs_generator(initial_state):
-    dfs = puzzle.DFS()
-    visited = set()
-    dfs.add_to_structure(initial_state)
-    visited.add(initial_state.state_to_tuple())
-
-    while not dfs.is_empty():
-        current_state = dfs.get_from_structure()
-
-        if current_state.is_final():
-            yield current_state, True
-            return
-
-        for neighbor in current_state.get_neighbors():
-            if neighbor.state_to_tuple() not in visited:
-                dfs.add_to_structure(neighbor)
-                visited.add(neighbor.state_to_tuple())
-        
-        yield current_state, False
-
-def astar_generator(initial_state):
-    astar = puzzle.Astar()
-    visited = set()
-    astar.add_to_structure(initial_state)
-    visited.add(initial_state.state_to_tuple())
-
-    while not astar.is_empty():
-        current_state = astar.get_from_structure()
-
-        if current_state.is_final():
-            yield current_state, True
-            return
-
-        for neighbor in current_state.get_neighbors():
-            if neighbor.state_to_tuple() not in visited:
-                astar.add_to_structure(neighbor)
-                visited.add(neighbor.state_to_tuple())
-        
         yield current_state, False
 
 board = puzzle.State(puzzle.initial_state(100))  
@@ -120,15 +86,12 @@ count = 0
 game_over = False
 mode = None
 current_state = board
-bfs_steps = None
-greedy_steps = None
-dfs_steps = None
-astar_steps = None
 
 start_time = 0  
 resolution_time = 0  
 shortest_path_length = 0  
 
+# Loop principal do jogo
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -190,29 +153,30 @@ while True:
             if playNormalButton.collidepoint(mouse):
                 time.sleep(0.2)
                 mode = 1
+                start_time = time.time()  
             elif playAIButton.collidepoint(mouse):
                 time.sleep(0.2)
                 mode = 0
-                bfs_steps = bfs_generator(current_state)
+                bfs_steps = PlayAI(puzzle.BFS, current_state)
                 start_time = time.time()  
             elif playAIDFSButton.collidepoint(mouse):
                 time.sleep(0.2)
                 mode = 3
-                dfs_steps = dfs_generator(current_state)
+                dfs_steps = PlayAI(puzzle.DFS, current_state)
                 start_time = time.time()  
             elif playAIGreedyButton.collidepoint(mouse):
                 time.sleep(0.2)
                 mode = 2
-                greedy_steps = greedy_generator(current_state)
+                greedy_steps = PlayAI(puzzle.Greedy, current_state)
                 start_time = time.time()  
             elif playAIAStarButton.collidepoint(mouse):
                 time.sleep(0.2)
                 mode = 4
-                astar_steps = astar_generator(current_state)
+                astar_steps = PlayAI(puzzle.Astar, current_state)
                 start_time = time.time() 
 
 
-    elif mode == 0:  
+    elif mode == 0:  # BFS
         screen.fill(black)
 
         title = largeFont.render("8 - PUZZLE AI", True, white)
@@ -260,6 +224,10 @@ while True:
             restartRect.center = (width / 2, height - 50)
             pygame.draw.rect(screen, blue, restartRect.inflate(20, 20), border_radius=10)
             screen.blit(restart_button, restartRect)
+            
+            pygame.display.flip()
+
+            stop_updates()
 
             click, _, _ = pygame.mouse.get_pressed()
             if click == 1:
@@ -272,7 +240,7 @@ while True:
 
         pygame.display.flip()
 
-    elif mode == 1:  
+    elif mode == 1:  # Jogador Manual
         screen.fill(black)
 
         title = largeFont.render("Play 8 - PUZZLE", True, white)
@@ -319,11 +287,22 @@ while True:
             moves_count_rect.center = (width / 2, 100)
             screen.blit(moves_count_text, moves_count_rect)
 
+            resolution_time_text = mediumFont.render(f"Tempo de resolução: {resolution_time:.2f} segundos", True, white)
+            resolution_time_rect = resolution_time_text.get_rect()
+            resolution_time_rect.center = (width / 2, 50)
+            screen.blit(resolution_time_text, resolution_time_rect)
+
             restart_button = mediumFont.render("Recomeçar", True, white)
             restartRect = restart_button.get_rect()
             restartRect.center = (width / 2, height - 50)
             pygame.draw.rect(screen, blue, restartRect.inflate(20, 20), border_radius=10)
             screen.blit(restart_button, restartRect)
+
+
+            pygame.display.flip()
+
+            stop_updates()
+
 
             click, _, _ = pygame.mouse.get_pressed()
             if click == 1:
@@ -386,6 +365,12 @@ while True:
             pygame.draw.rect(screen, blue, restartRect.inflate(20, 20), border_radius=10)
             screen.blit(restart_button, restartRect)
 
+
+            pygame.display.flip()
+
+            stop_updates()
+
+
             click, _, _ = pygame.mouse.get_pressed()
             if click == 1:
                 mouse = pygame.mouse.get_pos()
@@ -445,6 +430,10 @@ while True:
             restartRect.center = (width / 2, height - 50)
             pygame.draw.rect(screen, blue, restartRect.inflate(20, 20), border_radius=10)
             screen.blit(restart_button, restartRect)
+
+            pygame.display.flip()
+
+            stop_updates()
 
             click, _, _ = pygame.mouse.get_pressed()
             if click == 1:
@@ -506,6 +495,10 @@ while True:
             restartRect.center = (width / 2, height - 50)
             pygame.draw.rect(screen, blue, restartRect.inflate(20, 20), border_radius=10)
             screen.blit(restart_button, restartRect)
+
+            pygame.display.flip()
+
+            stop_updates()
 
             click, _, _ = pygame.mouse.get_pressed()
             if click == 1:

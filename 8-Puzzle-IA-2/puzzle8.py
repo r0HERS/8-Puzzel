@@ -151,8 +151,23 @@ class DFS():
         return len(self.stack) == 0
 
 class Greedy():
-    
-    pass
+    def __init__(self):
+        self.current_state = None  
+        self.current_value = float('inf') 
+
+    def add_to_structure(self, state):
+        value = state.manhattan() 
+
+        if value < self.current_value:
+            self.current_state = state
+            self.current_value = value  
+
+    def get_from_structure(self):
+        return self.current_state  
+
+    def is_empty(self):
+        return self.current_state is None
+
 
 class Astar():
     def __init__(self):

@@ -1,206 +1,213 @@
 import random
 import copy
 from collections import deque
-import math
 import heapq
+import time
+
 
 EMPTY = 0
-
-state_empty = [[EMPTY, EMPTY, EMPTY],
-               [EMPTY, EMPTY, EMPTY],
-               [EMPTY, EMPTY, EMPTY]]
 
 state_final = [[1, 2, 3],
                [4, 5, 6],
                [7, 8, EMPTY]]
 
-
 def initial_state(n):
-    state = copy.deepcopy(state_final)
+    state = State(copy.deepcopy(state_final))  
 
     for i in range(n):
-        numbers = available_moves(state)
+        numbers = state.available_moves() 
         k = random.choice(numbers)
-        state = make_move(state, k)
+        state = state.make_move(k)  
 
-    return state
+    return state.state
 
-def make_random_move(state,n):
+class State():
+    def __init__(self, state=None, step_count=0,previous = None):
+        self.state = state
+        self.step_count = step_count
+        self.previous = previous
 
-    for i in range(n):
-        numbers = available_moves(state)
-        k = random.choice(numbers)
-        state = make_move(state, k)
+    def print_state(self):
+        for row in self.state:
+            print(row)
+        print()
 
-    return state
+    def is_final(self):
+        for row in range(len(self.state)):
+            for cell in range(len(self.state[row])):
+                if self.state[row][cell] != state_final[row][cell]:
+                    return False
+        return True
+
+    def state_to_tuple(self):
+        return tuple(tuple(row) for row in self.state)
+
+    def available_moves(self):
+        empty_location = None
+        numbers = []
+
+        for row in range(len(self.state)):
+            for cell in range(len(self.state[row])):
+                if self.state[row][cell] == EMPTY:
+                    empty_location = (row, cell)
+                    break
+
+        if empty_location[0] - 1 != -1:
+            numbers.append(self.state[empty_location[0] - 1][empty_location[1]])
+        if empty_location[0] + 1 != 3:
+            numbers.append(self.state[empty_location[0] + 1][empty_location[1]])
+        if empty_location[1] - 1 != -1:
+            numbers.append(self.state[empty_location[0]][empty_location[1] - 1])
+        if empty_location[1] + 1 != 3:
+            numbers.append(self.state[empty_location[0]][empty_location[1] + 1])
+
+        return numbers
+
+    def make_move(self, number):
+        empty_location = None
+        number_location = None
+        copy_state = copy.deepcopy(self.state)
+
+        for row in range(len(self.state)):
+            for cell in range(len(self.state[row])):
+                if self.state[row][cell] == EMPTY:
+                    empty_location = (row, cell)
+                    break
+
+        for row in range(len(self.state)):
+            for cell in range(len(self.state[row])):
+                if self.state[row][cell] == number:
+                    number_location = (row, cell)
+                    break
+
+        copy_state[empty_location[0]][empty_location[1]] = number
+        copy_state[number_location[0]][number_location[1]] = EMPTY
+
+        return State(copy_state, self.step_count + 1,previous=self)
+
+    def get_neighbors(self):
+        neighbors = []
+        for number in self.available_moves():
+            next_state = self.make_move(number)
+            neighbors.append(next_state)
+        return neighbors
+
+    def manhattan(self):
+        value = 0
+        for row in range(len(self.state)):
+            for cell in range(len(self.state[row])):
+                num = self.state[row][cell]
+                if num != EMPTY:
+                    for i in range(len(state_final)):
+                        for j in range(len(state_final[i])):
+                            if state_final[i][j] == num:
+                                value += abs(row - i) + abs(cell - j)
+        return value
+
+    def A_star(self):
+        new_count = self.step_count + 1
+        manhattan_value = self.manhattan()
+        total_value = new_count + manhattan_value
+
+        print(total_value)
+        print(new_count)
+        print(manhattan_value)
+
+        return (total_value, new_count, self)
+
+    def reconstruct_path(self):
+        path = []
+        current = self
+        while current:
+            path.append(current)
+            current = current.previous
+        return path[::-1]
+
+class BFS():
+    def __init__(self):
+        self.queue = deque()
+
+    def add_to_structure(self, state):
+        self.queue.append(state)
+
+    def get_from_structure(self):
+        return self.queue.popleft()
+
+    def is_empty(self):
+        return len(self.queue) == 0
 
 
-def print_state(state):
-    for row in state:
-        print(row)
+class DFS():
+    def __init__(self):
+        self.stack = []
+
+    def add_to_structure(self, state):
+        self.stack.append(state)
+
+    def get_from_structure(self):
+        return self.stack.pop()
+
+    def is_empty(self):
+        return len(self.stack) == 0
+
+class Greedy():
+    
+    pass
+
+class Astar():
+    def __init__(self):
+        self.priority_queue = []
+        self.counter = 0  
+
+    def add_to_structure(self, state):
+        total = state.A_star()
+        heapq.heappush(self.priority_queue, (total[0], self.counter, total[2]))
+        self.counter += 1
+
+    def get_from_structure(self):
+        return heapq.heappop(self.priority_queue)[2]
+
+    def is_empty(self):
+        return len(self.priority_queue) == 0
 
 
-def is_final(state):
-    for row in range(len(state)):
-        for cell in range(len(state[row])):
-            if state[row][cell] != state_final[row][cell]:
-                return False
-
-    return True
-
-
-def available_moves(state):
-    empty_location = None
-
-    numbers = []
-
-    for row in range(len(state)):
-        for cell in range(len(state[row])):
-            if state[row][cell] == EMPTY:
-                empty_location = (row, cell)
-                break
-
-    if empty_location[0] - 1 != -1:
-        numbers.append(state[empty_location[0] - 1][empty_location[1]])
-    if empty_location[0] + 1 != 3:
-        numbers.append(state[empty_location[0] + 1][empty_location[1]])
-    if empty_location[1] - 1 != -1:
-        numbers.append(state[empty_location[0]][empty_location[1] - 1])
-    if empty_location[1] + 1 != 3:
-        numbers.append(state[empty_location[0]][empty_location[1] + 1])
-
-    return numbers
-
-
-def make_move(state, number):
-    empty_location = None
-    number_location = None
-    copy_state = copy.deepcopy(state)
-
-    for row in range(len(state)):
-        for cell in range(len(state[row])):
-            if state[row][cell] == EMPTY:
-                empty_location = (row, cell)
-                break
-
-    for row in range(len(state)):
-        for cell in range(len(state[row])):
-            if state[row][cell] == number:
-                number_location = (row, cell)
-                break
-
-    copy_state[empty_location[0]][empty_location[1]] = number
-    copy_state[number_location[0]][number_location[1]] = EMPTY
-
-    return copy_state
-
-
-def get_neightbors(state):
-    neightbors = []
-
-    for number in available_moves(state):
-        next_state = make_move(state, number)
-        neightbors.append(next_state)
-
-    return neightbors
-
-
-def state_to_tuple(state):
-    return tuple(tuple(row) for row in state)
-
-def manhattan(state):
-    value = 0
-    for row in range(len(state)):
-        for cell in range(len(state[row])):
-            num = state[row][cell]
-            if num != EMPTY:  
-                for i in range(len(state_final)):
-                    for j in range(len(state_final[i])):
-                        if state_final[i][j] == num:
-                            value += abs(row - i) + abs(cell - j)
-    return value
-
-
-
-'''def playIA():
-    state = initial_state(100)
+def playIA(algorithm, state):
+    start_time = time.time()
+    structure = algorithm()
 
     visited = set()
-    queue = deque([state])
-    next_state = state_empty
-    visited.add(state_to_tuple(state))
+    structure.add_to_structure(state)
+    visited.add(state.state_to_tuple())
 
-    while queue:
-        current_state = queue.popleft()
-        manhattan_value = 100
-        if is_final(current_state):
-            print("achoooooooooooooooooo")
-            print_state(current_state)
-            return 0
-        
-        for neightbor in get_neightbors(current_state):
-            if state_to_tuple(neightbor) not in visited:
-                x = manhattan(neightbor)
-                if x < manhattan_value:
-                    manhattan_value = x
-                    print(manhattan_value)
-                    next_state = neightbor
+    steps = 0
+    while not structure.is_empty():
+        steps += 1
+        current_state = structure.get_from_structure()
 
-        if next_state == current_state:
-            next_state = initial_state(1) 
-                
-        queue.append(next_state)
-        visited.add(state_to_tuple(next_state))
+        if current_state.is_final():
+            print("Solução encontrada!")
+            current_state.print_state()
+            path = current_state.reconstruct_path()  
+            print(len(path))
+            #time.sleep(10)
+            for state_in_path in path:
+                state_in_path.print_state()
+            print(f"Número de passos: {steps}")
+            print(f"Tempo de execução: {time.time() - start_time:.2f} segundos")
+            return
 
-        print_state(current_state)
-    return None
+        for neighbor in current_state.get_neighbors():
+            if neighbor.state_to_tuple() not in visited:
+                structure.add_to_structure(neighbor)
+                visited.add(neighbor.state_to_tuple())
 
+        current_state.print_state()
 
-playIA()'''
+    print("Solução não encontrada.")
 
+initial__state = State(initial_state(100))
+#playIA(BFS, initial__state)
 
-def A_star(state,step_count):
+#playIA(DFS, initial__state)
 
-    new_count = step_count + 1
-
-    manhattan_value = manhattan(state)
-
-    toltal_value = new_count + manhattan_value 
-
-    return (toltal_value,new_count,state)
-
-
-'''def playIAStar():
-    state = initial_state(100)
-
-    visited = set()
-
-    priority_queue = []
-
-    step_count = 0 
-
-    manhattan_value = manhattan(state)
-
-    heapq.heappush(priority_queue,(manhattan_value + step_count,step_count,state))
-
-
-    while priority_queue:
-        
-        current_state = heapq.heappop(priority_queue)
-        print_state(current_state[2])
-        print(current_state[0])
-        print(current_state[1])
-        if is_final(current_state[2]):
-            print("achoooooooooooooooooooooooooooooo")
-            print_state(current_state[2])
-            return 0
-
-        for neighbor in get_neightbors(current_state[2]):
-            if state_to_tuple(neighbor) not in visited:
-                visited.add(state_to_tuple(neighbor))
-                tuple_state = A_star(neighbor, current_state[1])
-                heapq.heappush(priority_queue, tuple_state)
-
-    return
-
-playIAStar()'''
+playIA(Astar, initial__state)
